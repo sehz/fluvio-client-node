@@ -33,47 +33,34 @@ run_publish:
 clean:
 	rm -rf dist
 
-examples: example_produce example_list_topic example_create_topic \
-	example_find_topic example_create_custom_spu \
-	example_delete_custom_spu example_create_managed_spu \
-	example_delete_managed_spu # TODO: example_consume example_delete_topic
+example_npm_init:
+	fluvio topic create node-examples || true
+	cd examples && npm init -y && npm install -D typescript ts-node @types/node && npm install -S @fluvio/client --path ../
+
+examples: example_produce example_list_topics example_create_topic \
+	example_find_topic
 
 
-example_produce:	build
+example_produce: build example_npm_init
 	FLUVIO_DEV=1 npx ts-node ./examples/produce.ts
 
-example_consume:	build
+example_consume: build example_npm_init
 	FLUVIO_DEV=1 npx ts-node ./examples/consume.ts
 
-example_iterator:	build
+example_iterator: build example_npm_init
 	FLUVIO_DEV=1 npx ts-node ./examples/iterator.ts
 
-example_list_topic:	build
-	FLUVIO_DEV=1 npx ts-node ./examples/listTopic.ts
+example_list_topics: build example_npm_init
+	FLUVIO_DEV=1 npx ts-node ./examples/listTopics.ts
 
-example_create_topic:	build
+example_create_topic: build example_npm_init
 	FLUVIO_DEV=1 npx ts-node ./examples/createTopic.ts
 
-example_delete_topic:	build
+example_delete_topic: build example_npm_init
 	FLUVIO_DEV=1 npx ts-node ./examples/deleteTopic.ts
 
-example_find_topic:	build
+example_find_topic: build example_npm_init
 	FLUVIO_DEV=1 npx ts-node ./examples/findTopic.ts
-
-example_list_spu:	build
-	FLUVIO_DEV=1 npx ts-node ./examples/listSpu.ts
-
-example_create_custom_spu:	build
-	FLUVIO_DEV=1 npx ts-node ./examples/createCustomSpu.ts
-
-example_delete_custom_spu:	build
-	FLUVIO_DEV=1 npx ts-node ./examples/deleteCustomSpu.ts
-
-example_create_managed_spu:	build
-	FLUVIO_DEV=1 npx ts-node ./examples/createManagedSpu.ts
-
-example_delete_managed_spu:	build
-	FLUVIO_DEV=1 npx ts-node ./examples/deleteManagedSpu.ts
 
 install-clippy:
 	rustup component add clippy --toolchain stable

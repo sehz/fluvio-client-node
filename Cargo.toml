@@ -1,24 +1,27 @@
 [package]
 name = "fluvio-client-node"
 version = "0.9.0"
-edition = "2018"
+edition = "2021"
 authors = ["Fluvio Contributors <team@fluvio.io>"]
 license = "Apache-2.0"
 repository = "https://github.com/infinyon/fluvio-client-node"
 description = "Node JS Client for Fluvio"
-readme = "REAMD.md"
+readme = "README.md"
 
 [lib]
 crate-type = ["cdylib"]
 test = false
 
 [dependencies]
+base64 = "0.13.0"
 log = "0.4"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 node-bindgen = "5.0.0"
-fluvio = { version = "0.12", features = ["admin"] }
-fluvio-future = { version = "0.3.15", features = ["tls", "task", "io"] }
+flate2 = "1.0.24"
+fluvio = { version = "0.15", features = ["admin"] }
+fluvio-future = { version = "0.4.2", features = ["tls", "task", "io"] }
+fluvio-spu-schema = "0.11"
 
 [build-dependencies]
-node-bindgen = { version = "5.0.0", features = ["build"] }
+node-bindgen = { version = "5.0.0", default-features = false, features = ["build"] }

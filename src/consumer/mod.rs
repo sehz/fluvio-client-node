@@ -1,3 +1,5 @@
+mod config;
+
 use crate::{OFFSET_BEGINNING, OFFSET_END, CLIENT_NOT_FOUND_ERROR_MSG};
 use crate::{optional_property, must_property};
 use crate::error::FluvioErrorJS;
@@ -6,13 +8,13 @@ use std::fmt;
 use std::pin::Pin;
 use std::sync::Arc;
 use log::{debug, error};
-use fluvio::PartitionConsumer;
+use fluvio::{PartitionConsumer, ConsumerConfig};
 use fluvio::{Offset, FluvioError};
-use fluvio::dataplane::fetch::{FetchablePartitionResponse, AbortedTransaction};
 use fluvio::dataplane::record::RecordSet;
 use fluvio::consumer::Record;
 use fluvio_future::task::spawn;
 use fluvio_future::io::{Stream, StreamExt};
+use fluvio_spu_schema::fetch::{FetchablePartitionResponse, AbortedTransaction};
 
 use node_bindgen::derive::node_bindgen;
 use node_bindgen::core::NjError;
@@ -133,6 +135,25 @@ impl PartitionConsumerJS {
         iterator.set_inner(Box::pin(stream));
         Ok(iterator)
     }
+
+    #[node_bindgen]
+    async fn stream_with_config(
+        &self,
+        offset: OffsetWrapper,
+        config: config::ConfigWrapper,
+    ) -> Result<PartitionConsumerIterator, FluvioErrorJS> {
+        let config: ConsumerConfig = config.inner;
+        let client = self
+            .inner
+            .as_ref()
+            .ok_or_else(|| FluvioError::Other(CLIENT_NOT_FOUND_ERROR_MSG.to_string()))?;
+        let stream = client.stream_with_config(offset.0, config).await?;
+        let mut iterator = PartitionConsumerIterator::new();
+
+        iterator.set_inner(Box::pin(stream));
+
+        Ok(iterator)
+    }
 }
 
 #[derive(Clone)]
@@ -207,8 +228,7 @@ impl fmt::Debug for RecordJS {
             .unwrap()
             .key()
             .is_some()
-            .then(|| "Some(<Key>)")
-            .unwrap_or("None");
+            .then_some("Some(<Key>)");
 
         f.debug_struct("RecordJS")
             .field("key", &key)
@@ -217,7 +237,7 @@ impl fmt::Debug for RecordJS {
     }
 }
 
-use fluvio::dataplane::ErrorCode;
+use fluvio::dataplane::link::ErrorCode;
 type PartitionConsumerIteratorInner = Pin<Box<dyn Stream<Item = Result<Record, ErrorCode>> + Send>>;
 
 pub struct PartitionConsumerIterator {
@@ -350,7 +370,7 @@ impl<'a> FetchablePartitionResponseWrapper {
     }
 
     #[node_bindgen(getter)]
-    fn partition_index(&self) -> Option<i32> {
+    fn partition_index(&self) -> Option<u32> {
         Some(self.0.as_ref()?.partition_index)
     }
 
